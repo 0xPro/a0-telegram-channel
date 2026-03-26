@@ -5,8 +5,9 @@ import os
 import base64
 from dotenv import load_dotenv
 from telegram import Update
+from telegram.error import TelegramError
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
-from api_client import ApiClient
+from api_client import ApiClient, POLL_INTERVAL
 
 load_dotenv("/a0/usr/secrets.env")
 
@@ -54,7 +55,11 @@ async def progressive_update(chat_id: int, context_id: str, message_obj):
                 pass  # message may be too new
 
         if data["log"].get("progress") == "complete":
-            await message_obj.edit_text(last_content)
+            if last_content:
+                try:
+                    await message_obj.edit_text(last_content)
+                except TelegramError:
+                    pass
             break
         await asyncio.sleep(POLL_INTERVAL)
 
@@ -84,18 +89,39 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         # Get or create context
         ctx_id = contexts.get(str(chat_id))
-        response, new_ctx = await api.api_message(user_msg, ctx_id, attachment)
+
+        # Launch api_message as a task so progressive updates can run concurrently
+        api_task = asyncio.create_task(api.api_message(user_msg, ctx_id, attachment))
+
+        # Start live progressive updates if we already have a context
+        prog_task = None
+        if ctx_id:
+            prog_task = asyncio.create_task(progressive_update(chat_id, ctx_id, thinking_msg))
+
+        response, new_ctx = await api_task
         contexts[str(chat_id)] = new_ctx
         save_contexts()
 
-        # Start live progressive updates
-        asyncio.create_task(progressive_update(chat_id, new_ctx, thinking_msg))
+        # Cancel progressive update if still running
+        if prog_task and not prog_task.done():
+            prog_task.cancel()
+            try:
+                await prog_task
+            except asyncio.CancelledError:
+                pass
+
+        # Show final response
+        final_text = response or "✅ Done (no text response)"
+        try:
+            await thinking_msg.edit_text(final_text)
+        except TelegramError:
+            pass  # May already show the same text from progressive update
 
     except Exception as e:
         await thinking_msg.edit_text(f"❌ Error: {str(e)}")
 
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("✅ Advanced Telegram Bridge v2.0 is online!\nLive progressive updates enabled.\nCommands: /help")
+    await update.message.reply_text("✅ Advanced Telegram Bridge v2.1 is online!\nLive progressive updates enabled.\nCommands: /help")
 
 async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
     help_text = """**Advanced Commands**
@@ -164,7 +190,7 @@ def main():
     app.add_handler(CommandHandler("terminate", cmd_terminate))
     app.add_handler(CommandHandler("status", cmd_status))
     app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, handle_message))
-    print("Advanced Telegram Bridge v2.0 started with live updates...")
+    print("Advanced Telegram Bridge v2.1 started with live updates...")
     app.run_polling()
 
 if __name__ == "__main__":
