@@ -17,7 +17,7 @@ chmod +x "$INSTALL_DIR/telegram_bridge.py"
 
 # === DEPENDENCY INSTALLATION (this is the version control part) ===
 echo "📦 Installing pinned Python libraries..."
-python3 -m pip install -r "$INSTALL_DIR/requirements.txt" --quiet --upgrade --no-cache-dir --no-deps
+python3 -m pip install -r "$INSTALL_DIR/requirements.txt" --quiet --upgrade --no-cache-dir
 
 # Update secrets.env if missing
 if ! grep -q "TELEGRAM_BOT_TOKEN" /a0/usr/secrets.env 2>/dev/null; then
