@@ -55,14 +55,16 @@ Telegram <-> telegram_bridge.py <-> Agent Zero API (localhost:8000)
    POLL_INTERVAL=1.5
    ```
 
-   | Variable                     | Description                                                                 |
-   |------------------------------|-----------------------------------------------------------------------------|
-   | `TELEGRAM_BOT_TOKEN`         | Token from @BotFather                                                       |
-   | `AGENT_ZERO_API_KEY`         | API key from Agent Zero > Settings > External Services                      |
-   | `AGENT_ZERO_URL`             | Agent Zero base URL (default `http://localhost:8000`)                       |
-   | `TELEGRAM_OWNER_CHAT_ID`     | Your Telegram chat ID (used by the `SendToTelegram` tool)                   |
-   | `TELEGRAM_ALLOWED_CHAT_IDS`  | JSON array of chat IDs allowed to use the bot (empty `[]` = allow everyone) |
-   | `POLL_INTERVAL`              | Seconds between progressive-update polls (default `1.5`)                    |
+   All of the variables above are actively referenced by the Python code. Their purpose and usage points are:
+
+   | Variable                     | What it is                                                                  | Code reference                                                                       |
+   |------------------------------|-----------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
+   | `TELEGRAM_BOT_TOKEN`         | Token from @BotFather                                                       | Loaded in `telegram_bridge.py` and `telegram_extension.py` to authenticate the Telegram bot |
+   | `AGENT_ZERO_API_KEY`         | API key from Agent Zero > Settings > External Services                      | Loaded in `api_client.py` and sent as the `X-API-KEY` header on Agent Zero API requests |
+   | `AGENT_ZERO_URL`             | Agent Zero base URL (default `http://localhost:8000`)                       | Loaded in `api_client.py` and used to construct Agent Zero API endpoint URLs |
+   | `TELEGRAM_OWNER_CHAT_ID`     | Your Telegram chat ID (used by the `SendToTelegram` tool)                   | Loaded in `telegram_bridge.py` and `telegram_extension.py`; used as the fallback chat for outbound messages |
+   | `TELEGRAM_ALLOWED_CHAT_IDS`  | JSON array of chat IDs allowed to use the bot (empty `[]` = allow everyone) | Loaded in `telegram_bridge.py` and checked before handling incoming Telegram messages |
+   | `POLL_INTERVAL`              | Seconds between progressive-update polls (default `1.5`)                    | Loaded in `api_client.py`, imported into `telegram_bridge.py`, and used between progressive-update polls |
 
 4. **Re-run the installer** to finish setup:
 
