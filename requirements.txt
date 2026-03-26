@@ -1,0 +1,8 @@
+# Advanced Telegram Plugin v2.1 – Pinned dependencies (March 2026)
+# These versions are the latest stable at the time of this spec
+
+python-telegram-bot==22.7          # Latest async Telegram Bot API (Mar 16, 2026)
+httpx==0.28.1                      # HTTP client used by ApiClient
+python-dotenv==1.2.2               # For loading /a0/usr/secrets.env
+
+# No other dependencies — everything else is Python standard library
