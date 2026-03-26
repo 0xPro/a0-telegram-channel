@@ -5,6 +5,7 @@ import os
 import base64
 from dotenv import load_dotenv
 from telegram import Update
+from telegram.error import TelegramError
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 from api_client import ApiClient, POLL_INTERVAL
 
@@ -57,7 +58,7 @@ async def progressive_update(chat_id: int, context_id: str, message_obj):
             if last_content:
                 try:
                     await message_obj.edit_text(last_content)
-                except:
+                except TelegramError:
                     pass
             break
         await asyncio.sleep(POLL_INTERVAL)
@@ -113,7 +114,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         final_text = response or "✅ Done (no text response)"
         try:
             await thinking_msg.edit_text(final_text)
-        except Exception:
+        except TelegramError:
             pass  # May already show the same text from progressive update
 
     except Exception as e:
